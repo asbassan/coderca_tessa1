@@ -1,0 +1,38 @@
+{
+  "top_k": 5,
+  "weights": {
+    "topic_overlap_weight": 4.0,
+    "skill_overlap_weight": 3.0,
+    "recent_engagement_weight": 2.5,
+    "preferred_source_weight": 1.5,
+    "author_affinity_weight": 1.0
+  },
+  "bucket_bonuses": {
+    "popularity": {
+      "high": 2.0,
+      "medium": 1.0,
+      "low": 0.0,
+      "unknown": 0.0
+    },
+    "recency": {
+      "recent": 2.0,
+      "warm": 1.0,
+      "stale": 0.0,
+      "unknown": 0.0
+    }
+  },
+  "feature_definitions": {
+    "topic_overlap": "Rewards overlap between a user's interests and a post's extracted topics.",
+    "skill_overlap": "Rewards overlap between a user's explicit skills and a post's topics or framing.",
+    "recent_engagement": "Rewards topics similar to the user's recent engagement history.",
+    "preferred_source": "Adds a small bonus when the post source matches a source the user often reads.",
+    "author_affinity": "Reserved for a future affinity signal when users follow specific authors or creators.",
+    "popularity_bucket": "Adds a transparent bonus based on simplified popularity buckets rather than a learned popularity model.",
+    "recency_bucket": "Adds a transparent freshness bonus based on publish-time buckets."
+  },
+  "notes": [
+    "This file is the demo stand-in for a larger real-world ranking-policy layer.",
+    "In production, ranking would also reflect feature engineering, learned ranking models, user-behavior signals, and policy rules.",
+    "The goal here is to make each feature visible so the end user can understand what each score component represents."
+  ]
+}

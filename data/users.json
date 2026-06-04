@@ -1,0 +1,42 @@
+[
+  {
+    "user_id": "user-ava-ml",
+    "name": "Ava Patel",
+    "headline": "ML engineer exploring ranking systems",
+    "skills": ["python", "machine learning", "ranking", "experimentation"],
+    "interests": ["technology", "microsoft", "ai", "startups"],
+    "recent_engagement_topics": ["technology", "microsoft", "ai"],
+    "preferred_sources": ["TechCrunch", "The Verge", "Wired"],
+    "notes": "Good demo user for technology-heavy and product-heavy posts."
+  },
+  {
+    "user_id": "user-mateo-econ",
+    "name": "Mateo Rivera",
+    "headline": "Economic policy analyst",
+    "skills": ["economics", "data analysis", "policy"],
+    "interests": ["economy", "markets", "europe", "government"],
+    "recent_engagement_topics": ["economy", "markets", "government"],
+    "preferred_sources": ["Reuters", "Financial Times", "Bloomberg"],
+    "notes": "Useful for posts where economic and institutional topics should outrank generic popularity."
+  },
+  {
+    "user_id": "user-samira-world",
+    "name": "Samira Haddad",
+    "headline": "Researcher following geopolitics and international affairs",
+    "skills": ["research", "analysis", "writing"],
+    "interests": ["palestine", "security", "diplomacy", "middle east"],
+    "recent_engagement_topics": ["palestine", "security", "diplomacy"],
+    "preferred_sources": ["BBC", "Al Jazeera", "Reuters"],
+    "notes": "Good demo user for world-news and geopolitics ranking examples."
+  },
+  {
+    "user_id": "user-jordan-product",
+    "name": "Jordan Kim",
+    "headline": "Product manager interested in consumer platforms",
+    "skills": ["product management", "analytics", "growth"],
+    "interests": ["apple", "mobile", "consumer tech", "platforms"],
+    "recent_engagement_topics": ["apple", "mobile", "platforms"],
+    "preferred_sources": ["The Verge", "TechCrunch", "CNBC"],
+    "notes": "Useful for showing that topical fit can outweigh raw popularity."
+  }
+]
