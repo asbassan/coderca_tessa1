@@ -54,12 +54,14 @@ def build_feed_post_records(max_rows: int = 200) -> list[FeedPostRecord]:
     """Map raw UCI rows into normalized feed-style records."""
     frame = load_uci_news_dataframe()
     frame = frame.head(max_rows).copy()
+    frame["__published_at"] = frame["PublishDate"].apply(_parse_datetime)
 
     posts: list[FeedPostRecord] = []
-    now = datetime.now(timezone.utc)
+    valid_timestamps = [value for value in frame["__published_at"].tolist() if value is not None]
+    reference_time = max(valid_timestamps) if valid_timestamps else datetime.now(timezone.utc)
 
     for _, row in frame.iterrows():
-        published_at = _parse_datetime(row.get("PublishDate"))
+        published_at = row.get("__published_at")
         linkedin_popularity = _to_float(row.get("LinkedIn"))
         facebook_popularity = _to_float(row.get("Facebook"))
         googleplus_popularity = _to_float(row.get("GooglePlus"))
@@ -76,7 +78,7 @@ def build_feed_post_records(max_rows: int = 200) -> list[FeedPostRecord]:
                 facebook_popularity=facebook_popularity,
                 googleplus_popularity=googleplus_popularity,
                 popularity_bucket=_popularity_bucket(linkedin_popularity),
-                recency_bucket=_recency_bucket(published_at, now),
+                recency_bucket=_recency_bucket(published_at, reference_time),
             )
         )
 
@@ -143,6 +145,8 @@ def _parse_datetime(value: Any) -> Optional[datetime]:
 
 
 def _popularity_bucket(linkedin_popularity: float) -> str:
+    if linkedin_popularity < 0:
+        return "unknown"
     if linkedin_popularity >= 500:
         return "high"
     if linkedin_popularity >= 100:
