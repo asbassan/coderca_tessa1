@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
-from tessa1.models import FeedInputs, FeedPost, ScoringConfig, UserProfile
-from tessa1.orchestrator import Orchestrator
+from coderca_tessa1.models import FeedInputs, FeedPost, ScoringConfig, UserProfile
+from coderca_tessa1.orchestrator import Orchestrator
 
 
 class StubLoader:

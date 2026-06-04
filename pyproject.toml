@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tessa1"
+name = "coderca_tessa1"
 version = "0.1.0"
 description = "Harness demo adapting the CodeRCA architecture to a feed retrieval workflow"
 readme = "README.md"
@@ -43,12 +43,12 @@ dev = [
 ]
 
 [project.scripts]
-tessa1 = "tessa1.cli:main"
+coderca_tessa1 = "coderca_tessa1.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/asbassan/coderca"
-Documentation = "https://github.com/asbassan/coderca/tree/master/docs"
-Repository = "https://github.com/asbassan/coderca"
+Homepage = "https://github.com/asbassan/coderca_tessa1"
+Documentation = "https://github.com/asbassan/coderca_tessa1"
+Repository = "https://github.com/asbassan/coderca_tessa1"
 
 [tool.setuptools.packages.find]
 where = ["src"]

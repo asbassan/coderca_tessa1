@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
-from tessa1.dataset_loader import FeedPostRecord, load_uci_news_dataframe, record_to_feed_post
-from tessa1.models import (
+from coderca_tessa1.dataset_loader import FeedPostRecord, load_uci_news_dataframe, record_to_feed_post
+from coderca_tessa1.models import (
     FeedContext,
     FeedPhaseResult,
     FeedReport,

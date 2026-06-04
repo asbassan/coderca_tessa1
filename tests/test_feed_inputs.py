@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from tessa1.input_loader import FeedInputLoader
-from tessa1.models import FeedPost
+from coderca_tessa1.input_loader import FeedInputLoader
+from coderca_tessa1.models import FeedPost
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -50,7 +50,7 @@ def test_feed_input_loader_load_inputs_aggregates_all_structured_inputs(monkeypa
     loader = FeedInputLoader(project_root=PROJECT_ROOT, max_posts=2)
 
     monkeypatch.setattr(
-        "tessa1.input_loader.build_feed_posts",
+        "coderca_tessa1.input_loader.build_feed_posts",
         lambda max_rows: [
             FeedPost(
                 post_id="post-1",
