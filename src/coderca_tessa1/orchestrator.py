@@ -141,11 +141,15 @@ class Orchestrator:
             self.runlog.phase_start(3, "AgentExecution")
         phase_start = time.time()
 
-        profile_result = self.agents["ProfileAgent"].analyze(selected_user, runlog=self.runlog)
+        profile_result, profile_intent = self.agents["ProfileAgent"].analyze(
+            selected_user,
+            runlog=self.runlog,
+        )
         context.add_phase_result(profile_result)
 
         ranking_result, ranked_posts = self.agents["RetrievalRankingAgent"].rank(
             profile=selected_user,
+            profile_intent=profile_intent,
             posts=inputs.posts,
             scoring_config=inputs.scoring_config,
             runlog=self.runlog,
@@ -189,8 +193,8 @@ class Orchestrator:
             explanations=explanations,
             architecture_mapping=[
                 "FeedInputs -> harness-side input loading",
-                "ProfileAgent -> profile normalization and signal extraction",
-                "RetrievalRankingAgent -> deterministic ranking and score breakdowns",
+                "ProfileAgent -> bounded profile interpretation into ranking-ready intent",
+                "RetrievalRankingAgent -> deterministic ranking over interpreted profile signals",
                 "SynthesisAgent -> explanation generation",
             ],
         )

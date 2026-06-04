@@ -79,3 +79,5 @@ def test_orchestrator_returns_ranked_feed_report() -> None:
     assert report.ranked_posts[0].total_score > report.ranked_posts[1].total_score
     assert report.explanations
     assert "microsoft" in report.explanations[0].lower()
+    assert report.phase_results[0].facts["primary_topics"]
+    assert "technical-builder" in report.phase_results[0].facts["profile_modes"]

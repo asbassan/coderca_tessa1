@@ -28,6 +28,7 @@ def test_scoring_json_has_visible_feature_definitions() -> None:
     assert scoring["top_k"] >= 1
     assert scoring["weights"]["topic_overlap_weight"] > 0
     assert scoring["weights"]["skill_overlap_weight"] > 0
+    assert scoring["ranking_policy"]["candidate_pool_multiplier"] >= 1
     assert "feature_definitions" in scoring
     assert "topic_overlap" in scoring["feature_definitions"]
     assert "recency_bucket" in scoring["feature_definitions"]
@@ -44,6 +45,7 @@ def test_feed_input_loader_builds_structured_profiles_and_scoring_config() -> No
     assert scoring.top_k == 5
     assert scoring.weight_for("topic_overlap_weight") == 4.0
     assert scoring.bucket_bonus_for("recency", "recent") == 2.0
+    assert scoring.policy_for("source_repeat_penalty") == 0.75
 
 
 def test_feed_input_loader_load_inputs_aggregates_all_structured_inputs(monkeypatch) -> None:

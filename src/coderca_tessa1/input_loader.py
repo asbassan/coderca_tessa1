@@ -61,6 +61,10 @@ class FeedInputLoader:
 
         weights = self._parse_float_mapping(payload.get("weights"), field_name="weights")
         bucket_bonuses = self._parse_bucket_bonuses(payload.get("bucket_bonuses"))
+        ranking_policy = self._parse_float_mapping(
+            payload.get("ranking_policy", {}),
+            field_name="ranking_policy",
+        )
         feature_definitions = self._parse_string_mapping(
             payload.get("feature_definitions"),
             field_name="feature_definitions",
@@ -71,6 +75,7 @@ class FeedInputLoader:
             top_k=top_k,
             weights=weights,
             bucket_bonuses=bucket_bonuses,
+            ranking_policy=ranking_policy,
             feature_definitions=feature_definitions,
             notes=notes,
         )

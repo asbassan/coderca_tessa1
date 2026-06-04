@@ -58,6 +58,22 @@ class UserProfile:
 
 
 @dataclass
+class ProfileIntent:
+    """Interpreted profile state used by ranking and explanations."""
+
+    user_id: str
+    primary_topics: list[str] = field(default_factory=list)
+    secondary_topics: list[str] = field(default_factory=list)
+    expanded_topics: list[str] = field(default_factory=list)
+    skill_signals: list[str] = field(default_factory=list)
+    recent_topics: list[str] = field(default_factory=list)
+    preferred_sources: list[str] = field(default_factory=list)
+    profile_modes: list[str] = field(default_factory=list)
+    weighted_topic_intents: dict[str, float] = field(default_factory=dict)
+    summary: str = ""
+
+
+@dataclass
 class FeedPost:
     """Normalized candidate post used across the Tessa feed pipeline."""
 
@@ -111,6 +127,7 @@ class ScoringConfig:
     top_k: int = 5
     weights: dict[str, float] = field(default_factory=dict)
     bucket_bonuses: dict[str, dict[str, float]] = field(default_factory=dict)
+    ranking_policy: dict[str, float] = field(default_factory=dict)
     feature_definitions: dict[str, str] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
@@ -119,6 +136,9 @@ class ScoringConfig:
 
     def bucket_bonus_for(self, category: str, bucket: str, default: float = 0.0) -> float:
         return float(self.bucket_bonuses.get(category, {}).get(bucket, default))
+
+    def policy_for(self, key: str, default: float = 0.0) -> float:
+        return float(self.ranking_policy.get(key, default))
 
 
 @dataclass
