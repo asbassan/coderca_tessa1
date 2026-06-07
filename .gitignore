@@ -8,3 +8,7 @@ venv/
 dist/
 build/
 src/*.egg-info/
+artifacts/
+runlogs/
+barge.exe
+directory.png

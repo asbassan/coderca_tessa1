@@ -499,7 +499,7 @@ class RetrievalRankingAgent:
 
 
 class SynthesisAgent:
-    """Create concise ranked-feed explanations from deterministic score facts."""
+    """Plan and generate ranked-feed explanations from deterministic score facts."""
 
     agent_name = "SynthesisAgent"
 
@@ -516,11 +516,27 @@ class SynthesisAgent:
     ) -> tuple[FeedPhaseResult, list[str]]:
         start = time.time()
         score_lookup = {score.post_id: score for score in ranked_posts}
-        explanations = [
-            self._explain_post(profile, post, score_lookup[post.post_id], scoring_config)
-            for post in top_posts
-            if post.post_id in score_lookup
-        ]
+        explanation_plan = self._build_explanation_plan(profile, top_posts, ranked_posts)
+        explanations = []
+        for index, post in enumerate(top_posts):
+            if post.post_id not in score_lookup:
+                continue
+            prior_score = (
+                score_lookup[top_posts[index - 1].post_id]
+                if index > 0 and top_posts[index - 1].post_id in score_lookup
+                else None
+            )
+            explanations.append(
+                self._explain_post(
+                    profile,
+                    post,
+                    score_lookup[post.post_id],
+                    scoring_config,
+                    explanation_plan,
+                    index,
+                    prior_score,
+                )
+            )
 
         if runlog:
             runlog.agent_start(self.agent_name)
@@ -538,15 +554,106 @@ class SynthesisAgent:
                 facts={
                     "explanation_count": len(explanations),
                     "top_post_ids": [post.post_id for post in top_posts],
+                    "audience_style": explanation_plan["audience_style"],
+                    "focus_order": explanation_plan["focus_order"],
+                    "contrast_pairs": explanation_plan["contrast_pairs"],
                 },
                 analysis=(
-                    f"Generated concise explanations for the top {len(explanations)} ranked posts "
-                    f"for {profile.name}."
+                    f"Planned and generated concise explanations for the top {len(explanations)} ranked posts "
+                    f"for {profile.name}, including salient-factor selection and cross-post contrasts."
                 ),
                 execution_time_ms=(time.time() - start) * 1000,
             ),
             explanations,
         )
+
+    def _build_explanation_plan(
+        self,
+        profile: UserProfile,
+        top_posts: list[FeedPost],
+        ranked_posts: list[ScoreBreakdown],
+    ) -> dict[str, object]:
+        audience_style = self._audience_style_from_profile_modes(
+            ranked_posts[0].metadata.get("profile_modes", []) if ranked_posts else []
+        )
+        focus_order = [
+            "primary intent",
+            "secondary intent",
+            "expanded intent",
+            "recent engagement",
+            "skill match",
+            "preferred source",
+            "candidate plan",
+            "diversity rerank",
+            "recency bucket",
+            "popularity bucket",
+        ]
+        contrast_pairs: list[str] = []
+        for previous, current in zip(top_posts, top_posts[1:]):
+            contrast_pairs.append(f"{previous.post_id}>{current.post_id}")
+
+        return {
+            "user_id": profile.user_id,
+            "audience_style": audience_style,
+            "focus_order": focus_order,
+            "contrast_pairs": contrast_pairs,
+        }
+
+    def _audience_style_from_profile_modes(self, profile_modes: object) -> str:
+        modes = [str(mode) for mode in profile_modes] if isinstance(profile_modes, list) else []
+        if "technical-builder" in modes:
+            return "technical"
+        if "business-analyst" in modes:
+            return "business"
+        if "geopolitics-researcher" in modes:
+            return "analytical"
+        if "product-operator" in modes:
+            return "product"
+        return "general"
+
+    def _select_salient_facts(
+        self,
+        explanation_facts: list[str],
+        plan: dict[str, object],
+    ) -> list[str]:
+        focus_order = [str(item) for item in plan.get("focus_order", [])]
+        ordered: list[str] = []
+        seen: set[str] = set()
+
+        for focus in focus_order:
+            for fact in explanation_facts:
+                if fact in seen:
+                    continue
+                if fact.startswith(focus):
+                    ordered.append(fact)
+                    seen.add(fact)
+                    break
+
+        for fact in explanation_facts:
+            if fact not in seen:
+                ordered.append(fact)
+                seen.add(fact)
+
+        return ordered[:4]
+
+    def _build_contrast_note(
+        self,
+        score: ScoreBreakdown,
+        prior_score: Optional[ScoreBreakdown],
+    ) -> str:
+        if prior_score is None:
+            return "It sets the strongest baseline in the current shortlist."
+
+        score_gap = prior_score.total_score - score.total_score
+        if score_gap <= 0:
+            return "It stays competitive with the post above because it preserves similar core relevance."
+        if score.affinity_bonus > prior_score.affinity_bonus:
+            return "It trails the post above overall but keeps stronger source affinity."
+        if score.recency_bonus > prior_score.recency_bonus:
+            return "It trails the post above overall but remains fresher in the current candidate set."
+        if score.skill_overlap_score > prior_score.skill_overlap_score:
+            return "It trails the post above overall but carries stronger explicit skill alignment."
+        return f"It ranks below the post above by {score_gap:.2f} points after synthesis tradeoffs."
 
     def _explain_post(
         self,
@@ -554,9 +661,27 @@ class SynthesisAgent:
         post: FeedPost,
         score: ScoreBreakdown,
         scoring_config: ScoringConfig,
+        plan: dict[str, object],
+        index: int,
+        prior_score: Optional[ScoreBreakdown] = None,
     ) -> str:
-        why = "; ".join(score.explanation_facts) if score.explanation_facts else "baseline ranking signals"
+        salient_facts = self._select_salient_facts(score.explanation_facts, plan)
+        why = "; ".join(salient_facts) if salient_facts else "baseline ranking signals"
+        contrast_note = self._build_contrast_note(score, prior_score)
+        audience_style = str(plan.get("audience_style", "general"))
+
+        prefix = f"Rank #{index + 1}: {post.display_title}"
+        if audience_style == "technical":
+            return (
+                f"{prefix} scored {score.total_score:.2f} for {profile.name}. "
+                f"Selected factors: {why}. {contrast_note}"
+            )
+        if audience_style == "business":
+            return (
+                f"{prefix} ranked for {profile.name} because the highest-value signals were {why}. "
+                f"{contrast_note}"
+            )
         return (
-            f"{post.display_title} ranked for {profile.name} with score {score.total_score:.2f} because of "
-            f"{why}."
+            f"{prefix} ranked for {profile.name} with score {score.total_score:.2f} because of {why}. "
+            f"{contrast_note}"
         )

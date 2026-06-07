@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 def _normalize_tags(values: list[str]) -> list[str]:
@@ -85,7 +85,7 @@ class FeedPost:
     popularity_bucket: str = "low"
     recency_bucket: str = "unknown"
     source: str = ""
-    published_at: Optional[datetime] = None
+    published_at: datetime | None = None
     headline: str = ""
     linkedin_popularity: float = 0.0
     facebook_popularity: float = 0.0
@@ -151,7 +151,7 @@ class FeedPhaseResult:
     analysis: str = ""
     execution_time_ms: float = 0.0
     confidence: float = 1.0
-    error: Optional[str] = None
+    error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -165,8 +165,8 @@ class FeedContext:
 
     feed_request_id: str
     start_time: datetime
-    end_time: Optional[datetime] = None
-    selected_user: Optional[UserProfile] = None
+    end_time: datetime | None = None
+    selected_user: UserProfile | None = None
     candidate_posts: list[FeedPost] = field(default_factory=list)
     selected_agents: list[str] = field(default_factory=list)
     phase_results: list[FeedPhaseResult] = field(default_factory=list)
@@ -177,7 +177,7 @@ class FeedContext:
     def add_phase_result(self, result: FeedPhaseResult) -> None:
         self.phase_results.append(result)
 
-    def get_result_by_agent(self, agent_name: str) -> Optional[FeedPhaseResult]:
+    def get_result_by_agent(self, agent_name: str) -> FeedPhaseResult | None:
         for result in self.phase_results:
             if result.agent_name == agent_name:
                 return result
@@ -198,7 +198,7 @@ class FeedInputs:
     posts: list[FeedPost]
     scoring_config: ScoringConfig
 
-    def get_user_by_id(self, user_id: str) -> Optional[UserProfile]:
+    def get_user_by_id(self, user_id: str) -> UserProfile | None:
         for user in self.users:
             if user.user_id == user_id:
                 return user
@@ -248,6 +248,8 @@ class FeedReport:
             )
             if score and score.explanation_facts:
                 lines.append(f"     why={' | '.join(score.explanation_facts)}")
+            if index < len(self.top_posts):
+                lines.append("")
 
         if self.explanations:
             lines.append("")

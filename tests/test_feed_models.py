@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
-from coderca_tessa1.dataset_loader import FeedPostRecord, load_uci_news_dataframe, record_to_feed_post
+from coderca_tessa1.dataset_loader import (
+    FeedPostRecord,
+    load_uci_news_dataframe,
+    record_to_feed_post,
+)
 from coderca_tessa1.models import (
     FeedContext,
     FeedPhaseResult,
@@ -113,6 +117,70 @@ def test_feed_report_formats_ranked_posts() -> None:
     assert "Ranking for engineers" in rendered
     assert "total_score=7.50" in rendered
     assert "topic overlap: ai" in rendered
+
+
+def test_feed_report_separates_multiple_post_blocks() -> None:
+    profile = UserProfile(
+        user_id="user-1",
+        name="Tessa Demo",
+        headline="AI engineer",
+    )
+    posts = [
+        record_to_feed_post(
+            FeedPostRecord(
+                post_id="post-42",
+                title="Ranking for engineers",
+                headline="How ranking systems evolve",
+                source="Engineering Weekly",
+                topic="AI",
+                published_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
+                linkedin_popularity=250.0,
+                facebook_popularity=120.0,
+                googleplus_popularity=10.0,
+                popularity_bucket="medium",
+                recency_bucket="recent",
+            )
+        ),
+        record_to_feed_post(
+            FeedPostRecord(
+                post_id="post-43",
+                title="Cloud ranking update",
+                headline="Platform signals change",
+                source="Tech Daily",
+                topic="Cloud",
+                published_at=datetime(2026, 6, 2, tzinfo=timezone.utc),
+                linkedin_popularity=300.0,
+                facebook_popularity=100.0,
+                googleplus_popularity=12.0,
+                popularity_bucket="high",
+                recency_bucket="recent",
+            )
+        ),
+    ]
+    scores = [
+        ScoreBreakdown(post_id="post-42", total_score=7.5, explanation_facts=["topic overlap: ai"]),
+        ScoreBreakdown(
+            post_id="post-43",
+            total_score=6.0,
+            explanation_facts=["topic overlap: cloud"],
+        ),
+    ]
+    report = FeedReport(
+        feed_request_id="feed-2",
+        timestamp=datetime(2026, 6, 3, tzinfo=timezone.utc),
+        selected_user=profile,
+        candidate_posts_count=12,
+        ranked_posts=scores,
+        top_posts=posts,
+        phase_results=[],
+        overall_summary="Selected two posts for spacing validation.",
+        explanations=["Rank #1 explanation", "Rank #2 explanation"],
+    )
+
+    rendered = report.to_text()
+
+    assert "why=topic overlap: ai\n\n  2. Cloud ranking update [post-43]" in rendered
+    assert "why=topic overlap: cloud\n\nGenerated Explanations:" in rendered
 
 
 def test_load_uci_news_dataframe_reads_local_csv_snapshot(tmp_path: Path) -> None:

@@ -13,12 +13,18 @@ from __future__ import annotations
 
 import time
 from datetime import datetime
-from typing import Optional, Tuple
 
 from .copilot_client import CopilotClient, create_client
 from .feed_agents import ProfileAgent, RetrievalRankingAgent, SynthesisAgent
 from .input_loader import FeedInputLoader
-from .models import FeedContext, FeedInputs, FeedPost, FeedReport, ScoreBreakdown, UserProfile
+from .models import (
+    FeedContext,
+    FeedInputs,
+    FeedPost,
+    FeedReport,
+    ScoreBreakdown,
+    UserProfile,
+)
 from .runlog import RunLog
 
 
@@ -27,14 +33,14 @@ class Orchestrator:
 
     def __init__(
         self,
-        input_loader: Optional[FeedInputLoader] = None,
-        copilot_client: Optional[CopilotClient] = None,
+        input_loader: FeedInputLoader | None = None,
+        copilot_client: CopilotClient | None = None,
         enable_runlog: bool = True,
         use_real_llm: bool = False,
     ):
         self.input_loader = input_loader or FeedInputLoader()
         self.enable_runlog = enable_runlog
-        self.runlog: Optional[RunLog] = None
+        self.runlog: RunLog | None = None
         self.use_real_llm = use_real_llm
         self.client = copilot_client or create_client(use_real_llm=use_real_llm)
 
@@ -54,7 +60,7 @@ class Orchestrator:
         """Phase 2: select the fixed feed-analysis agent pipeline."""
         return ["ProfileAgent", "RetrievalRankingAgent", "SynthesisAgent"]
 
-    def _select_user(self, inputs: FeedInputs, user_id: Optional[str]) -> UserProfile:
+    def _select_user(self, inputs: FeedInputs, user_id: str | None) -> UserProfile:
         if user_id:
             user = inputs.get_user_by_id(user_id)
             if user is None:
@@ -84,11 +90,11 @@ class Orchestrator:
 
     def investigate(
         self,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         max_posts: int = 200,
-        investigation_id: Optional[str] = None,
-        max_logs: Optional[int] = None,
-    ) -> Tuple[FeedReport, Optional[RunLog]]:
+        investigation_id: str | None = None,
+        max_logs: int | None = None,
+    ) -> tuple[FeedReport, RunLog | None]:
         """
         Run the feed retrieval pipeline end to end.
 
@@ -176,9 +182,12 @@ class Orchestrator:
             self.runlog.phase_end(4, "Synthesis", 0.0)
 
         context.end_time = datetime.now()
+        focus_topics = profile_intent.primary_topics[:3]
+        focus_summary = ", ".join(focus_topics) if focus_topics else "general interest"
         context.overall_analysis = (
-            f"Ranked {len(inputs.posts)} candidate posts for {selected_user.name} and selected "
-            f"the top {len(top_posts)}."
+            f"Selected {len(top_posts)} posts for {selected_user.name} "
+            f"from {len(inputs.posts)} candidates "
+            f"with strongest alignment to {focus_summary}."
         )
 
         report = FeedReport(

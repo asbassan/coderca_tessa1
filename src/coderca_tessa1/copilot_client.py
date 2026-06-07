@@ -15,15 +15,19 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+SDK_IMPORT_ERROR = None
 
 try:
-    from copilot import CopilotClient as GHCopilotClient, MessageOptions
-    from copilot.generated.session_events import SessionEventType
+    from copilot import CopilotClient as GHCopilotClient
+    try:
+        from copilot.generated.session_events import SessionEventType
+    except ImportError:
+        SessionEventType = None
     COPILOT_SDK_AVAILABLE = True
 except ImportError as e:
     COPILOT_SDK_AVAILABLE = False
+    SDK_IMPORT_ERROR = str(e)
     GHCopilotClient = None
-    MessageOptions = None
     SessionEventType = None
     logger.warning(f"GitHub Copilot SDK not available: {e}")
 
@@ -226,12 +230,16 @@ class CopilotClient:
             
             # Send and wait - simple request/response (ATTS pattern)
             response = await session.send_and_wait(
-                MessageOptions(prompt=prompt),
+                {"prompt": prompt},
                 timeout=timeout
             )
             
             # Extract content (ATTS pattern: check response type)
-            if response and response.type == SessionEventType.ASSISTANT_MESSAGE:
+            if (
+                response
+                and SessionEventType is not None
+                and response.type == SessionEventType.ASSISTANT_MESSAGE
+            ):
                 content = response.data.content
                 return content
             elif response and hasattr(response, 'data') and hasattr(response.data, 'content'):
